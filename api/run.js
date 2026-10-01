@@ -4,7 +4,8 @@ export default async function handler(req, res) {
     }
 
     try {
-        const { prompt } = req.body || {};
+        // Ambil prompt dan model dari frontend
+        const { prompt, model } = req.body || {};
 
         if (!prompt || !prompt.trim()) {
             return res.status(400).json({ error: "Prompt kosong." });
@@ -16,6 +17,9 @@ export default async function handler(req, res) {
             return res.status(500).json({ error: "API key OPENAI_API_KEY belum dipasang di Vercel." });
         }
 
+        // Gunakan model pilihan frontend, atau fallback ke gpt-3.5-turbo jika kosong
+        const selectedModel = model || "gpt-3.5-turbo";
+
         // Kirim request ke RumahAI
         const response = await fetch("https://rumahai.net/api/v1/chat/completions", {
             method: "POST",
@@ -24,7 +28,7 @@ export default async function handler(req, res) {
                 "Authorization": `Bearer ${apiKey}`
             },
             body: JSON.stringify({
-                model: "gpt-4o-mini", // Diganti ke model standar yang stabil
+                model: selectedModel,
                 messages: [
                     {
                         role: "user",
@@ -43,7 +47,7 @@ export default async function handler(req, res) {
             data = JSON.parse(rawText);
         } catch (e) {
             return res.status(500).json({ 
-                error: `RumahAI mengembalikan respon non-JSON: ${rawText.substring(0, 100)}` 
+                error: `RumahAI merespons non-JSON: ${rawText.substring(0, 100)}` 
             });
         }
 
