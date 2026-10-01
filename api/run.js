@@ -1,112 +1,64 @@
-export default function handler(req, res) {
-    return res.status(200).json({
-        apis: [
-            {
-                id: "gpt-5.6-luna",
-                label: "GPT-5.6 Luna",
-                button: "✨ Generate AI"
-            },
-            {
-                id: "claude-opus-4.8",
-                label: "Claude Opus 4.8",
-                button: "✨ Generate AI"
-            }
-        ]
-    });
-}export default function handler(req, res) {
-    return res.status(200).json({
-        apis: [
-            {
-                id: "gpt-5.6-luna",
-                label: "GPT-5.6 Luna",
-                button: "✨ Generate AI"
-            },
-            {
-                id: "claude-opus-4.8",
-                label: "Claude Opus 4.8",
-                button: "✨ Generate AI"
-            }
-        ]
-    });
-}export default async function handler(req, res) {
-    // Hanya menerima POST
+export default async function handler(req, res) {
     if (req.method !== "POST") {
-        return res.status(405).json({
-            error: "Method tidak diizinkan."
-        });
+        return res.status(405).json({ error: "Method tidak diizinkan." });
     }
 
     try {
-        // Ambil prompt dari website
         const { prompt } = req.body || {};
 
-        // Cek prompt
         if (!prompt || !prompt.trim()) {
-            return res.status(400).json({
-                error: "Prompt kosong."
-            });
+            return res.status(400).json({ error: "Prompt kosong." });
         }
 
-        // Ambil API key dari Vercel Environment Variables
         const apiKey = process.env.OPENAI_API_KEY;
 
         if (!apiKey) {
-            return res.status(500).json({
-                error: "API key belum dipasang di Vercel."
-            });
+            return res.status(500).json({ error: "API key OPENAI_API_KEY belum dipasang di Vercel." });
         }
 
         // Kirim request ke RumahAI
-        const response = await fetch(
-            "https://rumahai.net/api/v1/chat/completions",
-            {
-                method: "POST",
+        const response = await fetch("https://rumahai.net/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({
+                model: "gpt-4o-mini", // Diganti ke model standar yang stabil
+                messages: [
+                    {
+                        role: "user",
+                        content: prompt
+                    }
+                ],
+                stream: false,
+                temperature: 0.7
+            })
+        });
 
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${apiKey}`
-                },
+        const rawText = await response.text();
+        let data;
 
-                body: JSON.stringify({
-                    model: "GPT-5.6 Luna",
+        try {
+            data = JSON.parse(rawText);
+        } catch (e) {
+            return res.status(500).json({ 
+                error: `RumahAI mengembalikan respon non-JSON: ${rawText.substring(0, 100)}` 
+            });
+        }
 
-                    messages: [
-                        {
-                            role: "user",
-                            content: prompt
-                        }
-                    ],
-
-                    stream: false,
-                    temperature: 0.7
-                })
-            }
-        );
-
-        // Baca response dari RumahAI
-        const data = await response.json();
-
-        // Kalau RumahAI mengembalikan error
         if (!response.ok) {
             return res.status(response.status).json({
-                error:
-                    data?.error?.message ||
-                    data?.error ||
-                    "RumahAI gagal memproses permintaan."
+                error: data?.error?.message || data?.error || "RumahAI gagal memproses permintaan."
             });
         }
 
-        // Ambil hasil teks AI
-        const output =
-            data?.choices?.[0]?.message?.content || "";
+        const output = data?.choices?.[0]?.message?.content || "";
 
         if (!output) {
-            return res.status(500).json({
-                error: "AI mengembalikan hasil kosong."
-            });
+            return res.status(500).json({ error: "AI mengembalikan hasil kosong." });
         }
 
-        // Kirim hasil kembali ke script.js
         return res.status(200).json({
             kind: "text",
             data: output
@@ -114,9 +66,6 @@ export default function handler(req, res) {
 
     } catch (error) {
         console.error("RUN API ERROR:", error);
-
-        return res.status(500).json({
-            error: "Terjadi kesalahan pada server."
-        });
+        return res.status(500).json({ error: error.message || "Terjadi kesalahan pada server." });
     }
 }
