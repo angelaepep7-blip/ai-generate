@@ -666,13 +666,23 @@ btn.addEventListener(
 
                         body: JSON.stringify({
                             prompt: prompt
+                           model: current ? current.id : "gpt-3.5-turbo"
                         })
                     }
                 );
 
 
-            const data =
-                await response.json();
+            const responseText = await response.text();
+let data;
+try {
+    data = JSON.parse(responseText);
+} catch (e) {
+    throw new Error(responseText || "Server Error");
+}
+if (!response.ok) {
+    throw new Error(data.error || "Gagal memproses AI");
+}
+           
 
 
             if (!response.ok) {
