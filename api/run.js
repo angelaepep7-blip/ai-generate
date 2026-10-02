@@ -4,7 +4,6 @@ export default async function handler(req, res) {
     }
 
     try {
-        // Ambil prompt dan model dari frontend
         const { prompt, model } = req.body || {};
 
         if (!prompt || !prompt.trim()) {
@@ -17,10 +16,9 @@ export default async function handler(req, res) {
             return res.status(500).json({ error: "API key OPENAI_API_KEY belum dipasang di Vercel." });
         }
 
-        // Gunakan model pilihan frontend, atau fallback ke gpt-3.5-turbo jika kosong
-        const selectedModel = model || "gpt-3.5-turbo";
+        // Menggunakan ID model resmi RumahAI
+        const selectedModel = (model && model !== "undefined") ? model : "anthropic/claude-sonnet-5";
 
-        // Kirim request ke RumahAI
         const response = await fetch("https://rumahai.net/api/v1/chat/completions", {
             method: "POST",
             headers: {
@@ -47,13 +45,13 @@ export default async function handler(req, res) {
             data = JSON.parse(rawText);
         } catch (e) {
             return res.status(500).json({ 
-                error: `RumahAI merespons non-JSON: ${rawText.substring(0, 100)}` 
+                error: `RumahAI merespons: ${rawText.substring(0, 100)}` 
             });
         }
 
         if (!response.ok) {
             return res.status(response.status).json({
-                error: data?.error?.message || data?.error || "RumahAI gagal memproses permintaan."
+                error: data?.error?.message || data?.error || `Model '${selectedModel}' gagal diproses oleh RumahAI.`
             });
         }
 
@@ -73,3 +71,4 @@ export default async function handler(req, res) {
         return res.status(500).json({ error: error.message || "Terjadi kesalahan pada server." });
     }
 }
+
