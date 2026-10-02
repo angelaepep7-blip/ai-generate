@@ -4,10 +4,10 @@ export default async function handler(req, res) {
     }
 
     try {
-        const { prompt, model } = req.body || {};
+        const { prompt, model, image } = req.body || {};
 
-        if (!prompt || !prompt.trim()) {
-            return res.status(400).json({ error: "Prompt kosong." });
+        if (!prompt && !image) {
+            return res.status(400).json({ error: "Prompt atau gambar kosong." });
         }
 
         const apiKey = process.env.OPENAI_API_KEY;
@@ -16,8 +16,26 @@ export default async function handler(req, res) {
             return res.status(500).json({ error: "API key OPENAI_API_KEY belum dipasang di Vercel." });
         }
 
-        // Menggunakan ID model resmi RumahAI
         const selectedModel = (model && model !== "undefined") ? model : "anthropic/claude-sonnet-5";
+
+        // Susun konten pesan (teks & gambar)
+        const userContent = [];
+
+        if (prompt) {
+            userContent.push({
+                type: "text",
+                text: prompt
+            });
+        }
+
+        if (image) {
+            userContent.push({
+                type: "image_url",
+                image_url: {
+                    url: image
+                }
+            });
+        }
 
         const response = await fetch("https://rumahai.net/api/v1/chat/completions", {
             method: "POST",
@@ -30,7 +48,7 @@ export default async function handler(req, res) {
                 messages: [
                     {
                         role: "user",
-                        content: prompt
+                        content: userContent
                     }
                 ],
                 stream: false,
@@ -51,7 +69,7 @@ export default async function handler(req, res) {
 
         if (!response.ok) {
             return res.status(response.status).json({
-                error: data?.error?.message || data?.error || `Model '${selectedModel}' gagal diproses oleh RumahAI.`
+                error: data?.error?.message || data?.error || `Gagal memproses gambar/prompt.`
             });
         }
 
@@ -71,4 +89,5 @@ export default async function handler(req, res) {
         return res.status(500).json({ error: error.message || "Terjadi kesalahan pada server." });
     }
 }
+
 
