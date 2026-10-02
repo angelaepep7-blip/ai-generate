@@ -12,7 +12,6 @@ const img = $("resultImage");
 const txt = $("resultText");
 const links = $("resultLinks");
 
-const loading = $("loading");
 const dl = $("downloadBtn");
 
 const promptInput = $("promptInput");
@@ -184,8 +183,8 @@ function startSystem() {
 
     let progress = 0;
     progressTimer = setInterval(function () {
-        progress += Math.random() * 8;
-        if (progress > 96) progress = 96;
+        progress += Math.random() * 6;
+        if (progress > 94) progress = 94;
         if (progressBar) progressBar.style.width = progress + "%";
         generateTerminalText();
     }, 180);
@@ -197,7 +196,7 @@ function finishSystem() {
     if (statusText) statusText.textContent = "AI GENERATION COMPLETE";
 
     generateTerminalText();
-    setTimeout(stopMatrix, 1000);
+    setTimeout(stopMatrix, 800);
 }
 
 
@@ -353,12 +352,22 @@ btn.addEventListener("click", async function (event) {
     }
 
     /* =========================
-       START SYSTEM
+       START SYSTEM (TANPA OVERLAY)
     ========================= */
 
-    startSystem();
-    loading.classList.add("active");
+    btn.disabled = true; // Matikan tombol sementara agar tidak diklik ganda
+    btn.style.opacity = "0.6";
+
     result.classList.remove("show");
+    startSystem();
+
+    // Scroll otomatis secara halus ke section Sistem Aktif
+    if (systemCard) {
+        systemCard.scrollIntoView({
+            behavior: "smooth",
+            block: "center"
+        });
+    }
 
     try {
         const response = await fetch("/api/run", {
@@ -422,7 +431,7 @@ btn.addEventListener("click", async function (event) {
                 behavior: "smooth",
                 block: "center"
             });
-        }, 300);
+        }, 400);
 
     } catch (error) {
         clearInterval(progressTimer);
@@ -435,7 +444,8 @@ btn.addEventListener("click", async function (event) {
         alert(error.message || "Terjadi kesalahan.");
 
     } finally {
-        loading.classList.remove("active");
+        btn.disabled = false;
+        btn.style.opacity = "1";
     }
 });
 
@@ -462,4 +472,5 @@ dl.addEventListener("click", function () {
 ===================================================== */
 
 loadAPIs();
+   
            
