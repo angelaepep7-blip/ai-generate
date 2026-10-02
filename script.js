@@ -33,62 +33,32 @@ const matrixCanvas = $("matrixCanvas");
 let audioContext = null;
 
 function playClickSound() {
-
     try {
-
-        const AudioCtx =
-            window.AudioContext ||
-            window.webkitAudioContext;
-
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
         if (!AudioCtx) return;
 
         if (!audioContext) {
             audioContext = new AudioCtx();
         }
 
-        const osc =
-            audioContext.createOscillator();
-
-        const gain =
-            audioContext.createGain();
+        const osc = audioContext.createOscillator();
+        const gain = audioContext.createGain();
 
         osc.type = "sine";
+        osc.frequency.setValueAtTime(520, audioContext.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(880, audioContext.currentTime + 0.10);
 
-        osc.frequency.setValueAtTime(
-            520,
-            audioContext.currentTime
-        );
-
-        osc.frequency.exponentialRampToValueAtTime(
-            880,
-            audioContext.currentTime + 0.10
-        );
-
-        gain.gain.setValueAtTime(
-            0.08,
-            audioContext.currentTime
-        );
-
-        gain.gain.exponentialRampToValueAtTime(
-            0.001,
-            audioContext.currentTime + 0.12
-        );
+        gain.gain.setValueAtTime(0.08, audioContext.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.12);
 
         osc.connect(gain);
         gain.connect(audioContext.destination);
 
         osc.start();
-
-        osc.stop(
-            audioContext.currentTime + 0.12
-        );
-
+        osc.stop(audioContext.currentTime + 0.12);
     } catch (error) {
-
         console.log("Audio tidak tersedia.");
-
     }
-
 }
 
 
@@ -99,21 +69,10 @@ function playClickSound() {
 let typingTimeout;
 
 if (promptInput) {
-
-    promptInput.addEventListener(
-        "input",
-        function () {
-
-            clearTimeout(typingTimeout);
-
-            typingTimeout = setTimeout(
-                playClickSound,
-                35
-            );
-
-        }
-    );
-
+    promptInput.addEventListener("input", function () {
+        clearTimeout(typingTimeout);
+        typingTimeout = setTimeout(playClickSound, 35);
+    });
 }
 
 
@@ -121,128 +80,59 @@ if (promptInput) {
    MATRIX
 ===================================================== */
 
-const matrixCtx =
-    matrixCanvas
-        ? matrixCanvas.getContext("2d")
-        : null;
-
-const matrixChars =
-    "01ABCDEFGHIJKLMNOPQRSTUVWXYZ#$%&@";
+const matrixCtx = matrixCanvas ? matrixCanvas.getContext("2d") : null;
+const matrixChars = "01ABCDEFGHIJKLMNOPQRSTUVWXYZ#$%&@";
 
 let matrixDrops = [];
 let matrixRunning = false;
 
-
 function resizeMatrix() {
-
     if (!matrixCanvas) return;
+    matrixCanvas.width = window.innerWidth;
+    matrixCanvas.height = window.innerHeight;
 
-    matrixCanvas.width =
-        window.innerWidth;
-
-    matrixCanvas.height =
-        window.innerHeight;
-
-    const columns =
-        Math.floor(
-            matrixCanvas.width / 14
-        );
-
-    matrixDrops =
-        new Array(columns).fill(1);
-
+    const columns = Math.floor(matrixCanvas.width / 14);
+    matrixDrops = new Array(columns).fill(1);
 }
 
-
 resizeMatrix();
-
-window.addEventListener(
-    "resize",
-    resizeMatrix
-);
-
+window.addEventListener("resize", resizeMatrix);
 
 function drawMatrix() {
+    if (!matrixRunning || !matrixCtx) return;
 
-    if (!matrixRunning || !matrixCtx)
-        return;
+    matrixCtx.fillStyle = "rgba(0,0,0,.075)";
+    matrixCtx.fillRect(0, 0, matrixCanvas.width, matrixCanvas.height);
 
-    matrixCtx.fillStyle =
-        "rgba(0,0,0,.075)";
+    matrixCtx.fillStyle = "#27ff68";
+    matrixCtx.font = "13px monospace";
 
-    matrixCtx.fillRect(
-        0,
-        0,
-        matrixCanvas.width,
-        matrixCanvas.height
-    );
+    for (let i = 0; i < matrixDrops.length; i++) {
+        const char = matrixChars[Math.floor(Math.random() * matrixChars.length)];
+        matrixCtx.fillText(char, i * 14, matrixDrops[i] * 14);
 
-    matrixCtx.fillStyle =
-        "#27ff68";
-
-    matrixCtx.font =
-        "13px monospace";
-
-    for (
-        let i = 0;
-        i < matrixDrops.length;
-        i++
-    ) {
-
-        const char =
-            matrixChars[
-                Math.floor(
-                    Math.random() *
-                    matrixChars.length
-                )
-            ];
-
-        matrixCtx.fillText(
-            char,
-            i * 14,
-            matrixDrops[i] * 14
-        );
-
-        if (
-            matrixDrops[i] * 14 >
-            matrixCanvas.height &&
-            Math.random() > .975
-        ) {
-
+        if (matrixDrops[i] * 14 > matrixCanvas.height && Math.random() > .975) {
             matrixDrops[i] = 0;
-
         }
 
         matrixDrops[i]++;
-
     }
 
     requestAnimationFrame(drawMatrix);
-
 }
-
 
 function startMatrix() {
-
     if (!matrixCanvas) return;
-
     matrixRunning = true;
-
     matrixCanvas.classList.add("active");
-
     drawMatrix();
-
 }
 
-
 function stopMatrix() {
-
     matrixRunning = false;
-
     if (matrixCanvas) {
         matrixCanvas.classList.remove("active");
     }
-
 }
 
 
@@ -251,13 +141,10 @@ function stopMatrix() {
 ===================================================== */
 
 function generateTerminalText() {
-
     if (!systemText) return;
 
     let output = "";
-
     const lines = [
-
         "[SYSTEM] INITIALIZING...",
         "[AI] CONNECTING MODEL...",
         "[AI] READING PROMPT...",
@@ -265,39 +152,17 @@ function generateTerminalText() {
         "[ENGINE] GENERATING...",
         "[ENGINE] OPTIMIZING RESULT...",
         "[SYSTEM] FINALIZING..."
-
     ];
 
     for (let i = 0; i < 14; i++) {
-
-        output +=
-            lines[
-                Math.floor(
-                    Math.random() *
-                    lines.length
-                )
-            ];
-
-        output += "\n";
-
+        output += lines[Math.floor(Math.random() * lines.length)] + "\n";
         for (let x = 0; x < 35; x++) {
-
-            output +=
-                matrixChars[
-                    Math.floor(
-                        Math.random() *
-                        matrixChars.length
-                    )
-                ];
-
+            output += matrixChars[Math.floor(Math.random() * matrixChars.length)];
         }
-
         output += "\n";
-
     }
 
     systemText.textContent = output;
-
 }
 
 
@@ -307,72 +172,32 @@ function generateTerminalText() {
 
 let progressTimer;
 
-
 function startSystem() {
-
-    if (systemCard) {
-        systemCard.classList.add("active");
-    }
-
-    if (statusText) {
-        statusText.textContent =
-            "AI SYSTEM PROCESSING...";
-    }
-
-    if (progressBar) {
-        progressBar.style.width = "0%";
-    }
+    if (systemCard) systemCard.classList.add("active");
+    if (statusText) statusText.textContent = "AI SYSTEM PROCESSING...";
+    if (progressBar) progressBar.style.width = "0%";
 
     startMatrix();
-
     generateTerminalText();
 
     clearInterval(progressTimer);
 
     let progress = 0;
-
-    progressTimer =
-        setInterval(function () {
-
-            progress +=
-                Math.random() * 8;
-
-            if (progress > 96) {
-                progress = 96;
-            }
-
-            if (progressBar) {
-                progressBar.style.width =
-                    progress + "%";
-            }
-
-            generateTerminalText();
-
-        }, 180);
-
+    progressTimer = setInterval(function () {
+        progress += Math.random() * 8;
+        if (progress > 96) progress = 96;
+        if (progressBar) progressBar.style.width = progress + "%";
+        generateTerminalText();
+    }, 180);
 }
 
-
 function finishSystem() {
-
     clearInterval(progressTimer);
-
-    if (progressBar) {
-        progressBar.style.width = "100%";
-    }
-
-    if (statusText) {
-        statusText.textContent =
-            "AI GENERATION COMPLETE";
-    }
+    if (progressBar) progressBar.style.width = "100%";
+    if (statusText) statusText.textContent = "AI GENERATION COMPLETE";
 
     generateTerminalText();
-
-    setTimeout(
-        stopMatrix,
-        1000
-    );
-
+    setTimeout(stopMatrix, 1000);
 }
 
 
@@ -383,65 +208,36 @@ function finishSystem() {
 let APIS = [];
 let current = null;
 
-
 async function loadAPIs() {
-
     try {
-
-        const response =
-            await fetch("/api/list");
+        const response = await fetch("/api/list");
 
         if (!response.ok) {
-
-            throw new Error(
-                "Gagal mengambil daftar model AI."
-            );
-
+            throw new Error("Gagal mengambil daftar model AI.");
         }
 
-        const data =
-            await response.json();
+        const data = await response.json();
 
-        APIS =
-            Array.isArray(data.apis)
-                ? data.apis
-                : Array.isArray(data)
-                    ? data
-                    : [];
+        APIS = Array.isArray(data.apis)
+            ? data.apis
+            : Array.isArray(data)
+                ? data
+                : [];
 
         if (!APIS.length) {
-
-            throw new Error(
-                "Tidak ada model AI."
-            );
-
+            throw new Error("Tidak ada model AI.");
         }
 
-        sel.innerHTML =
-            APIS.map(api => {
-
-                return `
-                    <option value="${api.id}">
-                        ${api.label || api.id}
-                    </option>
-                `;
-
-            }).join("");
+        sel.innerHTML = APIS.map(api => {
+            return `<option value="${api.id}">${api.label || api.id}</option>`;
+        }).join("");
 
         renderModel();
 
     } catch (error) {
-
         console.error(error);
-
-        sel.innerHTML = `
-            <option>
-                Gagal memuat model AI
-            </option>
-        `;
-
+        sel.innerHTML = `<option>Gagal memuat model AI</option>`;
     }
-
 }
 
 
@@ -450,34 +246,22 @@ async function loadAPIs() {
 ===================================================== */
 
 function renderModel() {
+    current = APIS.find(api => api.id === sel.value);
 
-    current =
-        APIS.find(
-            api =>
-                api.id === sel.value
-        );
+    if (!current && APIS.length > 0) {
+        current = APIS[0];
+    }
 
     if (!current) return;
 
-    btn.textContent =
-        current.button ||
-        "✨ Generate AI";
-
+    btn.textContent = current.button || "✨ Generate AI";
     result.classList.remove("show");
-
 }
 
-
-sel.addEventListener(
-    "change",
-    function () {
-
-        playClickSound();
-
-        renderModel();
-
-    }
-);
+sel.addEventListener("change", function () {
+    playClickSound();
+    renderModel();
+});
 
 
 /* =====================================================
@@ -485,54 +269,23 @@ sel.addEventListener(
 ===================================================== */
 
 function createRipple(event) {
+    const button = event.currentTarget;
+    const circle = document.createElement("span");
 
-    const button =
-        event.currentTarget;
+    const diameter = Math.max(button.clientWidth, button.clientHeight);
+    const radius = diameter / 2;
+    const rect = button.getBoundingClientRect();
 
-    const circle =
-        document.createElement("span");
-
-    const diameter =
-        Math.max(
-            button.clientWidth,
-            button.clientHeight
-        );
-
-    const radius =
-        diameter / 2;
-
-    const rect =
-        button.getBoundingClientRect();
-
-    circle.style.width =
-        diameter + "px";
-
-    circle.style.height =
-        diameter + "px";
-
-    circle.style.left =
-        event.clientX -
-        rect.left -
-        radius +
-        "px";
-
-    circle.style.top =
-        event.clientY -
-        rect.top -
-        radius +
-        "px";
-
+    circle.style.width = diameter + "px";
+    circle.style.height = diameter + "px";
+    circle.style.left = event.clientX - rect.left - radius + "px";
+    circle.style.top = event.clientY - rect.top - radius + "px";
     circle.classList.add("ripple");
 
-    const old =
-        button.querySelector(".ripple");
-
-    if (old) {
-        old.remove();
-    }
+    const old = button.querySelector(".ripple");
+    if (old) old.remove();
 
     button.appendChild(circle);
-
 }
 
 
@@ -541,50 +294,29 @@ function createRipple(event) {
 ===================================================== */
 
 function showLinks(data) {
-
     links.innerHTML = "";
 
-    const text =
-        typeof data === "string"
-            ? data
-            : JSON.stringify(data || "");
+    const text = typeof data === "string" ? data : JSON.stringify(data || "");
+    const urls = text.match(/https?:\/\/[^\s"'\\<>]+/g) || [];
 
-    const urls =
-        text.match(
-            /https?:\/\/[^\s"'\\<>]+/g
-        ) || [];
-
-    [
-        ...new Set(urls)
-    ]
-        .slice(0, 6)
-        .forEach(url => {
-
-            const a =
-                document.createElement("a");
-
-            a.href = url;
-            a.target = "_blank";
-            a.rel = "noopener";
-
-            a.textContent =
-                "↗ " + url;
-
-            a.style.cssText = `
-                display:block;
-                padding:12px;
-                border-radius:12px;
-                border:1px solid rgba(75,255,140,.25);
-                color:#7dffaa;
-                font-size:13px;
-                word-break:break-all;
-                text-decoration:none;
-            `;
-
-            links.appendChild(a);
-
-        });
-
+    [...new Set(urls)].slice(0, 6).forEach(url => {
+        const a = document.createElement("a");
+        a.href = url;
+        a.target = "_blank";
+        a.rel = "noopener";
+        a.textContent = "↗ " + url;
+        a.style.cssText = `
+            display:block;
+            padding:12px;
+            border-radius:12px;
+            border:1px solid rgba(75,255,140,.25);
+            color:#7dffaa;
+            font-size:13px;
+            word-break:break-all;
+            text-decoration:none;
+        `;
+        links.appendChild(a);
+    });
 }
 
 
@@ -592,256 +324,126 @@ function showLinks(data) {
    GENERATE AI
 ===================================================== */
 
-btn.addEventListener(
-    "click",
-    async function (event) {
+btn.addEventListener("click", async function (event) {
+    playClickSound();
+    createRipple(event);
 
-        playClickSound();
+    if (!current) {
+        alert("Model AI belum dipilih.");
+        return;
+    }
 
-        createRipple(event);
+    const prompt = promptInput ? promptInput.value.trim() : "";
 
-        if (!current) {
+    if (!prompt) {
+        if (promptInput) promptInput.focus();
+        alert("Isi prompt terlebih dahulu.");
+        return;
+    }
 
-            alert(
-                "Model AI belum tersedia."
-            );
+    /* =========================
+       START SYSTEM
+    ========================= */
 
-            return;
+    startSystem();
+    loading.classList.add("active");
+    result.classList.remove("show");
 
-        }
+    try {
+        const response = await fetch("/api/run", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                prompt: prompt,
+                model: current.id // Kunci: Mengirimkan model ID yang dipilih ke backend!
+            })
+        });
 
-        const prompt =
-            promptInput
-                ? promptInput.value.trim()
-                : "";
-
-        if (!prompt) {
-
-            if (promptInput) {
-                promptInput.focus();
-            }
-
-            alert(
-                "Isi prompt terlebih dahulu."
-            );
-
-            return;
-
-        }
-
-
-        /* =========================
-           START SYSTEM
-        ========================= */
-
-        startSystem();
-
-        loading.classList.add("active");
-
-        result.classList.remove("show");
-
+        // Ambil respon sebagai teks terlebih dahulu untuk menghindari JSON Parse Error jika Vercel error
+        const responseText = await response.text();
+        let data;
 
         try {
-
-            /*
-             * BACKEND BARU
-             *
-             * /api/run.js hanya menerima:
-             *
-             * {
-             *   prompt: "..."
-             * }
-             */
-
-            const response =
-                await fetch(
-                    "/api/run",
-                    {
-                        method: "POST",
-
-                        headers: {
-                            "Content-Type":
-                                "application/json"
-                        },
-
-                        body: JSON.stringify({
-                            prompt: prompt
-                           model: current ? current.id : "gpt-3.5-turbo"
-                        })
-                    }
-                );
-
-
-            const responseText = await response.text();
-let data;
-try {
-    data = JSON.parse(responseText);
-} catch (e) {
-    throw new Error(responseText || "Server Error");
-}
-if (!response.ok) {
-    throw new Error(data.error || "Gagal memproses AI");
-}
-           
-
-
-            if (!response.ok) {
-
-                throw new Error(
-                    data.error ||
-                    "AI gagal memproses."
-                );
-
-            }
-
-
-            /* =========================
-               HASIL
-            ========================= */
-
-            if (
-                data.kind === "image" &&
-                data.image
-            ) {
-
-                img.src =
-                    data.image;
-
-                img.style.display =
-                    "block";
-
-                txt.style.display =
-                    "none";
-
-                dl.style.display =
-                    "block";
-
-                window.generatedImage =
-                    data.image;
-
-                links.innerHTML = "";
-
-            }
-
-            else {
-
-                const output =
-                    typeof data.data === "string"
-                        ? data.data
-                        : JSON.stringify(
-                            data.data,
-                            null,
-                            2
-                        );
-
-                txt.textContent =
-                    output;
-
-                txt.style.display =
-                    "block";
-
-                img.style.display =
-                    "none";
-
-                dl.style.display =
-                    "none";
-
-                showLinks(data.data);
-
-            }
-
-
-            /* =========================
-               SELESAI
-            ========================= */
-
-            finishSystem();
-
-            result.classList.add("show");
-
-            setTimeout(
-                function () {
-
-                    result.scrollIntoView({
-                        behavior: "smooth",
-                        block: "center"
-                    });
-
-                },
-                300
-            );
-
-
+            data = JSON.parse(responseText);
+        } catch (e) {
+            throw new Error(responseText || "Server Error (Keluaran bukan JSON)");
         }
 
-        catch (error) {
-
-            clearInterval(
-                progressTimer
-            );
-
-            stopMatrix();
-
-            if (statusText) {
-                statusText.textContent =
-                    "SYSTEM ERROR";
-            }
-
-            if (progressBar) {
-                progressBar.style.width =
-                    "0%";
-            }
-
-            console.error(error);
-
-            alert(
-                error.message ||
-                "Terjadi kesalahan."
-            );
-
+        if (!response.ok) {
+            throw new Error(data.error || "AI gagal memproses.");
         }
 
-        finally {
+        /* =========================
+           HASIL
+        ========================= */
 
-            loading.classList.remove(
-                "active"
-            );
+        if (data.kind === "image" && data.image) {
+            img.src = data.image;
+            img.style.display = "block";
+            txt.style.display = "none";
+            dl.style.display = "block";
+            window.generatedImage = data.image;
+            links.innerHTML = "";
+        } else {
+            const output = typeof data.data === "string"
+                ? data.data
+                : JSON.stringify(data.data, null, 2);
 
+            txt.textContent = output;
+            txt.style.display = "block";
+            img.style.display = "none";
+            dl.style.display = "none";
+
+            showLinks(data.data);
         }
 
+        /* =========================
+           SELESAI
+        ========================= */
+
+        finishSystem();
+        result.classList.add("show");
+
+        setTimeout(function () {
+            result.scrollIntoView({
+                behavior: "smooth",
+                block: "center"
+            });
+        }, 300);
+
+    } catch (error) {
+        clearInterval(progressTimer);
+        stopMatrix();
+
+        if (statusText) statusText.textContent = "SYSTEM ERROR";
+        if (progressBar) progressBar.style.width = "0%";
+
+        console.error(error);
+        alert(error.message || "Terjadi kesalahan.");
+
+    } finally {
+        loading.classList.remove("active");
     }
-);
+});
 
 
 /* =====================================================
    DOWNLOAD
 ===================================================== */
 
-dl.addEventListener(
-    "click",
-    function () {
+dl.addEventListener("click", function () {
+    if (!window.generatedImage) return;
 
-        if (!window.generatedImage)
-            return;
+    playClickSound();
 
-        playClickSound();
-
-        const a =
-            document.createElement("a");
-
-        a.href =
-            window.generatedImage;
-
-        a.target =
-            "_blank";
-
-        a.download =
-            "hasil-ai.png";
-
-        a.click();
-
-    }
-);
+    const a = document.createElement("a");
+    a.href = window.generatedImage;
+    a.target = "_blank";
+    a.download = "hasil-ai.png";
+    a.click();
+});
 
 
 /* =====================================================
@@ -849,3 +451,4 @@ dl.addEventListener(
 ===================================================== */
 
 loadAPIs();
+   
