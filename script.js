@@ -334,11 +334,22 @@ btn.addEventListener("click", async function (event) {
     }
 
     const prompt = promptInput ? promptInput.value.trim() : "";
+    const file = mediaInput && mediaInput.files ? mediaInput.files[0] : null;
 
-    if (!prompt) {
+    if (!prompt && !file) {
         if (promptInput) promptInput.focus();
-        alert("Isi prompt terlebih dahulu.");
+        alert("Isi prompt atau unggah foto terlebih dahulu.");
         return;
+    }
+
+    /* Pembacaan file ke Base64 */
+    let imageBase64 = null;
+    if (file) {
+        imageBase64 = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.readAsDataURL(file);
+        });
     }
 
     /* =========================
@@ -357,11 +368,11 @@ btn.addEventListener("click", async function (event) {
             },
             body: JSON.stringify({
                 prompt: prompt,
-                model: current.id // Kunci: Mengirimkan model ID yang dipilih ke backend!
+                model: current.id,
+                image: imageBase64
             })
         });
 
-        // Ambil respon sebagai teks terlebih dahulu untuk menghindari JSON Parse Error jika Vercel error
         const responseText = await response.text();
         let data;
 
@@ -451,4 +462,4 @@ dl.addEventListener("click", function () {
 ===================================================== */
 
 loadAPIs();
-   
+           
