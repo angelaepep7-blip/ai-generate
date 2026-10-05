@@ -19,7 +19,7 @@ export default async function handler(req, res) {
                 // =========================================================
         // KHUSUS MODEL GEMINI 3.6 FLASH
         // =========================================================
-        if (model === "gemini-3.6-flash") {
+        if (model && model.includes("gemini-3.6-flash")) {
             const geminiKey = process.env.GEMINI_API_KEY;
             if (!geminiKey) {
                 return res.status(500).json({ error: "API key GEMINI_API_KEY belum dipasang di Vercel." });
