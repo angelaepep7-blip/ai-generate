@@ -18,7 +18,7 @@ export default function handler(req, res) {
             },
             {
                 id: "openai/gemini-3.6-flash",
-                label: "Gemini 3.6 flash",
+                label: "Gemini 3.6 flash (maintenance)",
                 button: "⚡ generate promt"
             }
         ]
