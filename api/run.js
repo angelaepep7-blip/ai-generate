@@ -16,6 +16,54 @@ export default async function handler(req, res) {
             return res.status(500).json({ error: "API key OPENAI_API_KEY belum dipasang di Vercel." });
         }
 
+                // =========================================================
+        // KHUSUS MODEL GEMINI 3.6 FLASH
+        // =========================================================
+        if (model === "gemini-3.6-flash") {
+            const geminiKey = process.env.GEMINI_API_KEY;
+            if (!geminiKey) {
+                return res.status(500).json({ error: "API key GEMINI_API_KEY belum dipasang di Vercel." });
+            }
+
+            const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`;
+            
+            const parts = [];
+            if (prompt) parts.push({ text: prompt });
+
+            if (image) {
+                const base64Data = image.split(',')[1] || image;
+                const mimeType = image.split(';')[0].split(':')[1] || 'image/jpeg';
+                parts.push({
+                    inline_data: {
+                        mime_type: mimeType,
+                        data: base64Data
+                    }
+                });
+            }
+
+            const geminiRes = await fetch(geminiUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ contents: [{ parts }] })
+            });
+
+            const geminiData = await geminiRes.json();
+
+            if (!geminiRes.ok) {
+                return res.status(geminiRes.status).json({
+                    error: geminiData?.error?.message || "Gagal memproses ke Gemini API."
+                });
+            }
+
+            const outputText = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text || "Tidak ada respon dari Gemini.";
+
+            return res.status(200).json({
+                kind: "text",
+                data: outputText
+            });
+        }
+        
+
         const selectedModel = (model && model !== "undefined") ? model : "anthropic/claude-sonnet-5";
 
         // Susun konten pesan (teks & gambar)
